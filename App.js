@@ -1,20 +1,76 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, StyleSheet, Text, View } from 'react-native';
 
 export default function App() {
-  const [result, setResult] = useState(0);
+  const [input, setInput] = useState('0');
+  const [operand, setOperand] = useState(null);
+  const [negative, setNegative] = useState(false);
+  const [currentOperator, setCurrentOperator] = useState(null);
+  const [commaStatus, setCommaStatus] = useState(false);
 
-  function inputDigit(digit) {
-    if (!Number(result)) {
-      setResult(digit);
+  useEffect(() => {
+    if (negative && input > 0) {
+      setInput('-' + input);
+    } else if (+input < 0) {
+      setInput(input.substring(1));
+    }
+  },[negative])
+
+  function inputSign(sign) {
+    if (!+input && input.length === 1) {
+      setInput(sign);
     } else {
-      setResult(result + digit);
+      setInput(input + sign);
     }
   }
 
+  function doOperation() {
+    switch (currentOperator) {
+      case '+':
+        setOperand(+operand + +input);
+        break;
+
+      case '-':
+        setOperand(+operand - +input);
+        break;
+      
+      case '*':
+        setOperand(+operand * +input);
+        break;
+      
+      case '/':
+        setOperand(+operand / +input);
+        break;
+
+      default:
+        break;
+    }
+
+    setCurrentOperator(null);
+  }
+
+  function initOperation(sign) {
+    if (operand === null) {
+      setOperand(+input);
+    } else {
+      doOperation();
+    }
+    setCurrentOperator(sign);
+    setCommaStatus(false);
+  }
+
+  function showResult() {
+    if (input && currentOperator) {
+      doOperation();
+    }
+    setInput(operand);
+  }
+
   function reset() {
-    setResult("0");
+    setCommaStatus(false);
+    setOperand(null);
+    setInput('0');
   }
 
   return (
@@ -23,7 +79,7 @@ export default function App() {
         <Text
           style={{color: '#fff', fontSize: 50, fontWeight: 'bold', }}
         >
-          {result}
+          {input}
         </Text>
       </View>
       <View style={styles.buttonsContainer}>
@@ -40,7 +96,7 @@ export default function App() {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => toggle()}
+            onPress={() => setNegative(!negative)}
           >
             <Text
               style={styles.buttonText}
@@ -62,7 +118,7 @@ export default function App() {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => division()}
+            onPress={() => initOperation('/')}
           >
             <Text
               style={styles.buttonText}
@@ -117,7 +173,7 @@ export default function App() {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => inputDigit("7")}
+            onPress={() => inputSign('7')}
           >
             <Text
               style={styles.buttonText}
@@ -128,7 +184,7 @@ export default function App() {
         
           <TouchableOpacity
             style={styles.button}
-            onPress={() => inputDigit("8")}
+            onPress={() => inputSign('8')}
           >
             <Text
               style={styles.buttonText}
@@ -139,7 +195,7 @@ export default function App() {
         
           <TouchableOpacity
             style={styles.button}
-            onPress={() => inputDigit("9")}
+            onPress={() => inputSign('9')}
           >
             <Text
               style={styles.buttonText}
@@ -150,7 +206,7 @@ export default function App() {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => multiply()}
+            onPress={() => initOperation('*')}
           >
             <Text
               style={styles.buttonText}
@@ -161,7 +217,7 @@ export default function App() {
         
           <TouchableOpacity
             style={styles.button}
-            onPress={() => inputDigit("4")}
+            onPress={() => inputSign('4')}
           >
             <Text
               style={styles.buttonText}
@@ -172,7 +228,7 @@ export default function App() {
         
           <TouchableOpacity
             style={styles.button}
-            onPress={() => inputDigit("5")}
+            onPress={() => inputSign('5')}
           >
             <Text
               style={styles.buttonText}
@@ -183,7 +239,7 @@ export default function App() {
         
           <TouchableOpacity
             style={styles.button}
-            onPress={() => inputDigit("6")}
+            onPress={() => inputSign('6')}
           >
             <Text
               style={styles.buttonText}
@@ -194,7 +250,7 @@ export default function App() {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => subtract()}
+            onPress={() => initOperation('-')}
           >
             <Text
               style={styles.buttonText}
@@ -205,7 +261,7 @@ export default function App() {
         
           <TouchableOpacity
             style={styles.button}
-            onPress={() => inputDigit("1")}
+            onPress={() => inputSign('1')}
           >
             <Text
               style={styles.buttonText}
@@ -216,7 +272,7 @@ export default function App() {
         
           <TouchableOpacity
             style={styles.button}
-            onPress={() => inputDigit("2")}
+            onPress={() => inputSign('2')}
           >
             <Text
               style={styles.buttonText}
@@ -227,7 +283,7 @@ export default function App() {
         
           <TouchableOpacity
             style={styles.button}
-            onPress={() => inputDigit("3")}
+            onPress={() => inputSign('3')}
           >
             <Text
               style={styles.buttonText}
@@ -238,7 +294,7 @@ export default function App() {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => add()}
+            onPress={() => initOperation('+')}
           >
             <Text
               style={styles.buttonText}
@@ -249,7 +305,7 @@ export default function App() {
         
           <TouchableOpacity
             style={styles.buttonZero}
-            onPress={() => inputDigit("0")}
+            onPress={() => inputSign('0')}
           >
             <Text
               style={styles.buttonText}
@@ -260,7 +316,12 @@ export default function App() {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => addComma(",")}
+            onPress={() => {
+              if (!commaStatus) {
+                inputSign( !+input ? '0.' : '.' );
+                setCommaStatus(true);
+              }
+            }}
           >
             <Text
               style={styles.buttonText}
@@ -271,7 +332,7 @@ export default function App() {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => equal()}
+            onPress={() => showResult()}
           >
             <Text
               style={styles.buttonText}
